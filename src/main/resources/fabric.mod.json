@@ -1,0 +1,19 @@
+{
+	"schemaVersion": 1,
+	"id": "pulsehud",
+	"version": "${version}",
+	"name": "Pulse HUD",
+	"description": "Clean rounded HUD: FPS/ping, potion effects, item cooldowns, custom hotbar, off-hand and armor durability, with white glowing outlines and floating particles.",
+	"authors": ["you"],
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["dev.pulsehud.PulseHudClient"]
+	},
+	"depends": {
+		"fabricloader": ">=0.18.0",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
