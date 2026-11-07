@@ -9,30 +9,26 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.util.Identifier;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class VisualHudClient implements ClientModInitializer {
     private static final int MARGIN = 6;
 
-    // Эффекты: мелкий текст, иконка зелья 12x12
-    private static final float EFFECT_TEXT = Ui.TINY_SCALE;
-    private static final float POTION_ICON = 0.75f;
-    private static final int EFFECT_ROW = 14;
-    private static final int EFFECT_MIN_W = 100;
+    // Эффекты: панель покрупнее, текст помельче (только название и таймер)
+    private static final float EFFECT_TEXT = 0.55f;
+    private static final int EFFECT_ROW = 16;
+    private static final int EFFECT_PAD_X = 8;
+    private static final int EFFECT_PAD_Y = 5;
+    private static final int EFFECT_MIN_W = 118;
 
     // Кулдауны: предметы поменьше
     private static final float CD_ICON = 0.6f;     // ~10x10
@@ -96,26 +92,15 @@ public class VisualHudClient implements ClientModInitializer {
         return e.isInfinite() ? "∞" : formatTime(e.getDuration());
     }
 
-    /** Бутылка-зелье именно с этим эффектом (цвет жидкости = цвет эффекта). */
-    private static ItemStack potionFor(StatusEffectInstance e) {
-        ItemStack st = new ItemStack(Items.POTION);
-        st.set(DataComponentTypes.POTION_CONTENTS, new PotionContentsComponent(
-                Optional.empty(),
-                Optional.of(e.getEffectType().value().getColor()),
-                List.of(e),
-                Optional.empty()));
-        return st;
-    }
-
     /** Размер панели эффектов {ширина, высота}; нужен и кулдаунам, чтобы встать рядом. */
     private int[] effectsSize(TextRenderer tr, Collection<StatusEffectInstance> effects) {
         if (effects.isEmpty()) return new int[]{0, 0};
         int w = EFFECT_MIN_W;
         for (StatusEffectInstance e : effects) {
-            w = Math.max(w, 4 + 12 + 4 + Ui.textWidth(tr, effectName(e), EFFECT_TEXT)
-                    + 8 + Ui.textWidth(tr, effectTime(e), EFFECT_TEXT) + 5);
+            w = Math.max(w, EFFECT_PAD_X + Ui.textWidth(tr, effectName(e), EFFECT_TEXT)
+                    + 12 + Ui.textWidth(tr, effectTime(e), EFFECT_TEXT) + EFFECT_PAD_X);
         }
-        return new int[]{w, 6 + effects.size() * EFFECT_ROW};
+        return new int[]{w, EFFECT_PAD_Y * 2 + effects.size() * EFFECT_ROW};
     }
 
     private void renderEffects(DrawContext ctx, RenderTickCounter tick) {
@@ -131,14 +116,13 @@ public class VisualHudClient implements ClientModInitializer {
         int y = MARGIN;
 
         Ui.softPanel(ctx, x, y, w, h, 5);
-        int ry = y + 3;
+        int ry = y + EFFECT_PAD_Y;
         int textH = Ui.textHeight(tr, EFFECT_TEXT);
         for (StatusEffectInstance e : effects) {
-            Ui.item(ctx, potionFor(e), x + 4, ry + 1, POTION_ICON);
             int ty = ry + (EFFECT_ROW - textH) / 2;
-            Ui.text(ctx, tr, effectName(e), x + 20, ty, Ui.TEXT, EFFECT_TEXT);
+            Ui.text(ctx, tr, effectName(e), x + EFFECT_PAD_X, ty, Ui.TEXT, EFFECT_TEXT);
             String time = effectTime(e);
-            Ui.text(ctx, tr, time, x + w - 5 - Ui.textWidth(tr, time, EFFECT_TEXT), ty, Ui.WHITE, EFFECT_TEXT);
+            Ui.text(ctx, tr, time, x + w - EFFECT_PAD_X - Ui.textWidth(tr, time, EFFECT_TEXT), ty, Ui.WHITE, EFFECT_TEXT);
             ry += EFFECT_ROW;
         }
         fx("effects").draw(ctx, x, y, w, h);
