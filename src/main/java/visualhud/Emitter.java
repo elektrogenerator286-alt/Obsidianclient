@@ -53,7 +53,7 @@ public final class Emitter {
             float t = p.age / p.life;
             float fadeIn = Math.min(1f, t / 0.15f);
             float fadeOut = 1f - t;
-            int alpha = (int) (200f * fadeIn * fadeOut * fadeOut);
+            int alpha = (int) (200f * fadeIn * fadeOut * fadeOut * Ui.alpha());
             if (alpha < 6) continue;
             drawDot(ctx, p.x, p.y, p.size * (1f - 0.35f * t), alpha);
         }

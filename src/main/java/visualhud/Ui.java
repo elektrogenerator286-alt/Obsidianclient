@@ -11,12 +11,24 @@ public final class Ui {
     public static final int WHITE = 0xFFFFFF;
     public static final int TEXT_DIM = 0xA8A8A8;
     public static final float TEXT_SCALE = 0.8f;  // обычный мелкий текст
-    public static final float TINY_SCALE = 0.62f; // самый мелкий (эффекты, кулдауны, броня)
+    public static final float TINY_SCALE = 0.62f; // самый мелкий (эффекты, кулдауны, броня, меню)
+
+    /** Общий множитель прозрачности (для плавного появления меню). 1 = без изменений. */
+    private static float alphaMul = 1f;
 
     private Ui() {}
 
-    private static int argb(int rgb, int alpha) {
-        return (Math.max(0, Math.min(255, alpha)) << 24) | (rgb & 0xFFFFFF);
+    public static void setAlpha(float a) {
+        alphaMul = Math.max(0f, Math.min(1f, a));
+    }
+
+    public static float alpha() {
+        return alphaMul;
+    }
+
+    public static int argb(int rgb, int alpha) {
+        int a = Math.max(0, Math.min(255, Math.round(alpha * alphaMul)));
+        return (a << 24) | (rgb & 0xFFFFFF);
     }
 
     /** Одна скруглённая плашка (строка за строкой). */
@@ -35,8 +47,21 @@ public final class Ui {
         }
     }
 
-    /** Плашка с белой подсветкой снаружи и прозрачными краями (центр плотнее). */
     public static void softPanel(DrawContext ctx, int x, int y, int w, int h, int r) {
+        softPanel(ctx, x, y, w, h, r, 0f);
+    }
+
+    /**
+     * Плашка с белой подсветкой снаружи и прозрачными краями (центр плотнее).
+     * flash (0..1) добавляет широкий мягкий ореол, им подсвечивается появление меню.
+     */
+    public static void softPanel(DrawContext ctx, int x, int y, int w, int h, int r, float flash) {
+        if (flash > 0.01f) {
+            for (int k = 8; k >= 4; k--) {
+                int a = Math.round(11f * flash * (9 - k) / 5f);
+                if (a > 0) roundRect(ctx, x - k, y - k, w + 2 * k, h + 2 * k, r + k, argb(0xFFFFFF, a));
+            }
+        }
         for (int k = 3; k >= 1; k--) {
             roundRect(ctx, x - k, y - k, w + 2 * k, h + 2 * k, r + k, argb(0xFFFFFF, 14));
         }
@@ -67,10 +92,12 @@ public final class Ui {
     }
 
     public static void text(DrawContext ctx, TextRenderer tr, String s, int x, int y, int color, float scale) {
+        int a = Math.round(255 * alphaMul);
+        if (a < 8) return; // при очень малой прозрачности Minecraft рисует текст непрозрачным
         ctx.getMatrices().pushMatrix();
         ctx.getMatrices().translate(x, y);
         ctx.getMatrices().scale(scale, scale);
-        ctx.drawText(tr, s, 0, 0, 0xFF000000 | color, false);
+        ctx.drawText(tr, s, 0, 0, (a << 24) | (color & 0xFFFFFF), false);
         ctx.getMatrices().popMatrix();
     }
 

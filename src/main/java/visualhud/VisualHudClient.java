@@ -1,6 +1,7 @@
 package visualhud;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.MinecraftClient;
@@ -14,6 +15,7 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,6 +24,10 @@ import java.util.Map;
 
 public class VisualHudClient implements ClientModInitializer {
     private static final int MARGIN = 6;
+
+    /** Клавиша меню. По умолчанию Right Shift (левый Shift занят приседанием). */
+    public static final int MENU_KEY = GLFW.GLFW_KEY_RIGHT_SHIFT;
+    private boolean menuKeyWas = false;
 
     // Эффекты: панель покрупнее, текст помельче (только название и таймер)
     private static final float EFFECT_TEXT = 0.55f;
@@ -44,6 +50,16 @@ public class VisualHudClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        Features.init();
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (mc.getWindow() == null) return;
+            boolean down = GLFW.glfwGetKey(mc.getWindow().getHandle(), MENU_KEY) == GLFW.GLFW_PRESS;
+            if (down && !menuKeyWas && mc.currentScreen == null && mc.player != null) {
+                mc.setScreen(new MenuScreen());
+            }
+            menuKeyWas = down;
+        });
+
         HudElementRegistry.replaceElement(VanillaHudElements.HOTBAR, prev -> this::renderHotbarAndOffhand);
         HudElementRegistry.replaceElement(VanillaHudElements.STATUS_EFFECTS, prev -> this::renderEffects);
         HudElementRegistry.replaceElement(VanillaHudElements.ARMOR_BAR, prev -> (ctx, tick) -> {});
@@ -71,7 +87,7 @@ public class VisualHudClient implements ClientModInitializer {
             PlayerListEntry e = mc.getNetworkHandler().getPlayerListEntry(mc.player.getUuid());
             if (e != null) ping = e.getLatency();
         }
-        String s = "FPS " + mc.getCurrentFps() + "   |   ПИНГ " + ping + " мс";
+        String s = "fps " + mc.getCurrentFps() + "   |   пинг " + ping + " мс";
         int w = Math.max(96, Ui.textWidth(tr, s) + 14);
         int h = 15;
         int x = MARGIN, y = MARGIN;
