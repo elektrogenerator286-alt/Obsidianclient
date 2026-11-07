@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "visualhud",
+  "version": "${version}",
+  "name": "Obsidian Client",
+  "description": "Серый полупрозрачный HUD: FPS и пинг, эффекты, кулдауны, хотбар, вторая рука и прочность брони с белой подсветкой и частицами.",
+  "authors": ["you"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["visualhud.VisualHudClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
